@@ -163,6 +163,9 @@ class IndexPaginate:
     def get_results(self):
         """get all results, add task and total for notifications"""
         self.get_pit()
+        # If PIT creation failed (index doesn't exist), return empty results
+        if not self.pit_id:
+            return []
         self.validate_data()
         all_results = self.run_loop()
         self.clean_pit()
@@ -173,7 +176,12 @@ class IndexPaginate:
         keep_alive = self.kwargs.get("pit_keep_alive", 15)
         path = f"{self.index_name}/_pit?keep_alive={keep_alive}m"
         response, _ = ElasticWrap(path).post()
-        self.pit_id = response["id"]
+        # Handle case where index doesn't exist or other errors
+        if "id" in response:
+            self.pit_id = response["id"]
+        else:
+            # Index doesn't exist or error occurred - return empty results
+            self.pit_id = False
 
     def validate_data(self):
         """add pit and size to data"""

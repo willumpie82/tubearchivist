@@ -67,7 +67,10 @@ class PendingIndex:
         }
         self.all_videos = IndexPaginate("ta_video", data).get_results()
         for video in self.all_videos:
-            self.to_skip.append(video["youtube_id"])
+            # Handle videos that might not have youtube_id field (defensive coding)
+            video_id = video.get("youtube_id") or video.get("id")
+            if video_id:
+                self.to_skip.append(video_id)
 
     def get_channels(self):
         """get a list of all channels indexed"""

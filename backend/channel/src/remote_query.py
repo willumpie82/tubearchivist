@@ -114,17 +114,18 @@ def get_last_channel_videos(
     last_videos: list[dict] = []
 
     if not queries:
-        return last_videos
+        return []
 
-    for vid_type_enum, limit_amount in queries:
+    # Get the limit from the first query (all queries have same limit)
+    limit_amount = queries[0][1] if queries else None
+
+    for vid_type_enum, _ in queries:
         obs: dict[str, bool | str] = {
             "skip_download": True,
             "extract_flat": True,
         }
         vid_type = vid_type_enum.value
 
-        if limit is not None:
-            obs["playlist_items"] = f":{limit_amount}:1"
 
         url = f"https://www.youtube.com/channel/{channel_id}/{vid_type}"
         channel_query, _ = YtWrap(obs, config).extract(url)
@@ -133,6 +134,14 @@ def get_last_channel_videos(
 
         for entry in channel_query["entries"]:
             entry["vid_type"] = vid_type
+            # Map yt-dlp's 'id' field to 'youtube_id' for consistency
+            if "id" in entry and "youtube_id" not in entry:
+                entry["youtube_id"] = entry["id"]
             last_videos.append(entry)
 
-    return last_videos
+    # When using extract_flat=True, yt-dlp returns videos in YouTube's natural order (newest first)
+    # Just take the latest N items - no need to sort as timestamp is None for flat extracts
+    if not last_videos:
+        return []
+    
+    return last_videos[:limit_amount] if limit_amount else last_videos
