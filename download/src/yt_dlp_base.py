@@ -35,6 +35,7 @@ class YtWrap:
             path.join(EnvironmentSettings.CACHE_DIR, "ytdlp")
         ),
         "plugin_dirs": [],
+        "js_runtimes": {"node": {}},  # Use node.js for YouTube JS challenges
     }
 
     def __init__(self, obs_request, config=False):
